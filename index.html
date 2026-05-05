@@ -10,9 +10,18 @@
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
-  /* Font size 30px — only text sizes use rem, layout uses px so tiles don't balloon */
+  /*
+    Fix 3 — fluid typography:
+    clamp(min, preferred, max) means:
+      • min 16px  → always readable on any phone
+      • 4vw        → scales smoothly with viewport width
+      • max 30px  → caps out on large screens
+    This is exactly how modern responsive sites (Stripe, Linear, Vercel) handle font scaling —
+    no breakpoint jumps, just a smooth curve from phone to desktop.
+    Layout stays in px so tiles don't grow with text.
+  */
   :root{
-    font-size:30px;
+    font-size: clamp(16px, 4vw, 30px);
     --bg:#0f1117;--surface:#181b24;--surface2:#1e2230;--border:#2a2e3d;
     --text:#e2e4ea;--text-dim:#8b90a0;--accent:#4fa3e0;
     --accent-glow:rgba(79,163,224,.15);
@@ -20,7 +29,7 @@
     --green:#40c080;--yellow:#e0a840;--orange:#d06030;--red:#c03030
   }
   *{margin:0;padding:0;box-sizing:border-box}
-  body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;font-size:1rem;line-height:1.4}
+  body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;font-size:1rem;line-height:1.5}
 
   .page-wrap{max-width:1120px;margin:0 auto;}
 
@@ -29,7 +38,7 @@
   .header h1{font-size:.6rem;font-weight:700;letter-spacing:.5px;color:var(--accent)}
   .header .sub{font-size:.5rem;color:var(--text-dim);margin-top:2px;font-weight:500}
 
-  /* ── Main layout — px gaps/padding so tiles stay compact ── */
+  /* ── Main layout ── */
   .main{padding:10px;display:flex;flex-direction:column;gap:10px}
   .tile{background:var(--surface);padding:12px 16px;border:1px solid var(--border);border-radius:8px}
   .tile-label{font-size:.5rem;font-weight:600;text-transform:uppercase;letter-spacing:1.2px;color:var(--text-dim);margin-bottom:10px;display:flex;align-items:center;gap:7px}
@@ -38,23 +47,52 @@
   .row1{display:flex;gap:10px;align-items:stretch;flex-wrap:nowrap}
   .beam-col{flex:1;display:flex;flex-direction:column;gap:8px;min-width:0}
 
-  /* Canvas heights in px — don't scale with font */
   .beam-tile canvas{width:100%;height:280px;display:block;border-radius:6px;background:var(--bg);border:1px solid var(--border)}
   .graph-tile canvas{width:100%;height:280px;display:block;border-radius:6px;background:var(--bg);border:1px solid var(--border)}
 
   .slider-tile{background:var(--surface);padding:10px 16px;border:1px solid var(--border);border-radius:8px}
-
   .control-label{font-size:.5rem;font-weight:600;color:var(--text-dim);letter-spacing:.6px;margin-bottom:8px}
   #sliderLabel{text-transform:none;letter-spacing:normal;}
 
+  /* ── Fix 1: Slider wrap has extra bottom space for the dots below the track ── */
+  .slider-wrap{position:relative;padding-bottom:18px;}
   .slider-row{display:flex;align-items:center;gap:10px}
-  .slider-row input[type="range"]{flex:1;-webkit-appearance:none;appearance:none;height:6px;border-radius:3px;background:var(--surface2);outline:none;border:1px solid var(--border)}
+  .slider-row input[type="range"]{flex:1;-webkit-appearance:none;appearance:none;height:6px;border-radius:3px;background:var(--surface2);outline:none;border:1px solid var(--border);position:relative;z-index:1;}
   .slider-row input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;background:var(--accent);cursor:pointer;border:2px solid var(--bg);box-shadow:0 0 8px var(--accent-glow)}
   .slider-row input[type="range"]::-moz-range-thumb{width:18px;height:18px;border-radius:50%;background:var(--accent);cursor:pointer;border:2px solid var(--bg)}
-  .slider-row input[type="number"]{width:72px;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:'Inter',sans-serif;font-size:.55rem;font-weight:500;padding:5px 7px;text-align:right;outline:none}
+  .slider-row input[type="number"]{width:88px;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:'Inter',sans-serif;font-size:.55rem;font-weight:500;padding:5px 7px;text-align:right;outline:none}
   .slider-row input[type="number"]:focus{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-glow)}
-  .unit{font-size:.5rem;color:var(--text-dim);min-width:32px;font-weight:500}
 
+  /* Overlay is pointer-events:none except for the dots themselves */
+  .slider-track-overlay{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:0;}
+  /* Fix 1: dots sit BELOW the track line, not on it */
+  .snap-tick{
+    position:absolute;
+    width:10px;height:10px;border-radius:50%;
+    /* top set by JS to = track center + trackHalfHeight + gap below track */
+    transform:translateX(-50%);
+    cursor:pointer;pointer-events:all;
+    transition:transform .12s;
+    box-shadow:0 0 0 2px var(--bg);
+  }
+  .snap-tick:hover{transform:translateX(-50%) scale(1.5);}
+  .snap-tick.yield{background:#e0a840;}
+  .snap-tick.ultimate{background:#d06030;}
+  .snap-tick.fracture{background:#c03030;}
+
+  /* Compact snap tooltip — always fixed so it can't be clipped by tiles */
+  .snap-tooltip{
+    position:fixed;z-index:99999;
+    visibility:hidden;opacity:0;pointer-events:none;
+    transition:opacity .12s;
+    background:var(--surface2);border:1px solid var(--border);border-radius:6px;
+    padding:6px 10px;
+    box-shadow:0 4px 16px rgba(0,0,0,.55);
+  }
+  .snap-tooltip .st-title{font-size:.42rem;font-weight:700;color:var(--accent);margin-bottom:2px;letter-spacing:.3px;font-family:Inter,sans-serif;}
+  .snap-tooltip .st-def{font-size:.42rem;color:var(--text-dim);line-height:1.4;font-family:Inter,sans-serif;}
+
+  .unit{font-size:.5rem;color:var(--text-dim);min-width:32px;font-weight:500}
   select{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:'Inter',sans-serif;font-size:.55rem;font-weight:500;padding:7px 10px;outline:none;cursor:pointer}
   select:focus{border-color:var(--accent)}
 
@@ -70,7 +108,6 @@
   .graph-tile{position:relative}
   .status-badge{font-size:.5rem;font-weight:700;letter-spacing:.5px;transition:color .2s;margin-top:8px;display:inline-block}
 
-  /* Readout grid — fixed px gaps/padding */
   .readout-row{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;flex-shrink:0;}
   .readout-card{background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:5px 8px;text-align:center;position:relative;cursor:pointer;overflow:visible;}
   .rc-label{font-size:.55rem;color:var(--text-dim);margin-bottom:2px;font-weight:600;display:flex;align-items:center;justify-content:center;min-height:18px}
@@ -79,13 +116,12 @@
   .rc-unit{font-size:.42rem;color:var(--text-dim);font-weight:500}
 
   /* ── Light theme ── */
-  body.light{--bg:#e8ebf0;--surface:#f0f2f6;--surface2:#dde0e8;--border:#b8bdd0;--text:#1e2130;--text-dim:#4a5068;--accent:#2a7db5;--accent-glow:rgba(42,125,181,.15);--tension:#b02020;--compression:#1a60a0;--green:#207040;--yellow:#a06800;--orange:#904010;--red:#800000}
+  body.light{--bg:#f2f3f5;--surface:#e8eaed;--surface2:#dcdee3;--border:#c4c8d4;--text:#1a1d2e;--text-dim:#555a70;--accent:#2a7db5;--accent-glow:rgba(42,125,181,.15);--tension:#a82020;--compression:#1a5a9a;--green:#1a6035;--yellow:#8a5800;--orange:#7a3508;--red:#6a0000}
   body.light .rc-value{color:var(--text)}
   body.light select{color:var(--text);background:var(--bg)}
   body.light input{color:var(--text);background:var(--bg)}
   body.light canvas{border-color:var(--border)}
 
-  /* ── Cross-section shape selector ── */
   .shape-row{display:flex;gap:5px;margin-bottom:8px;}
   .shape-btn{flex:1;background:var(--bg);border:1px solid var(--border);border-radius:5px;padding:5px 3px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px;transition:border-color .15s,background .15s;}
   .shape-btn:hover,.shape-btn:focus{border-color:var(--accent);background:var(--surface2);}
@@ -93,28 +129,21 @@
   .shape-btn svg{width:20px;height:20px;}
   .shape-btn span{font-size:.4rem;color:var(--text-dim);font-weight:600;letter-spacing:.4px;text-transform:uppercase;}
 
-  /* ── 2×2 material props grid ── */
   .mat-props-grid{display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-top:6px;}
   .mat-prop-sm{background:var(--bg);border-radius:5px;padding:5px 7px;border:1px solid var(--border);display:flex;flex-direction:column;gap:1px;position:relative;cursor:pointer;}
   .mat-prop-sm .mp-label{font-size:.44rem;color:var(--text-dim);font-weight:500;}
   .mat-prop-sm .mp-label .katex{font-size:.44rem;}
   .mat-prop-sm .mp-value{font-size:.47rem;font-weight:600;color:var(--text);}
 
-  /* ── Cross-section diagram ── */
   .xsec-wrap{margin-top:8px;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:8px;display:flex;justify-content:center;align-items:center;cursor:help;}
   .xsec-wrap svg{max-width:100%;height:auto;overflow:visible;}
 
-  /* ── Controls column — px width ── */
   .controls-col{width:260px;min-width:220px;flex-shrink:0}
-
-  /* ── Beam tile label ── */
   .beam-tile-label{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;text-transform:uppercase;font-size:.48rem;font-weight:600;letter-spacing:1.2px;color:var(--text-dim);}
   .beam-tile-label-left{display:flex;align-items:center;gap:7px;}
   .beam-tile-label-left::before{content:'';width:6px;height:6px;background:var(--accent);border-radius:50%;flex-shrink:0;}
-
   .readout-card{position:relative;overflow:visible;}
 
-  /* ── Tooltips ── */
   .tip-wrap{visibility:hidden;opacity:0;position:fixed;z-index:9999;pointer-events:none;transition:opacity .15s;}
   @media(hover:hover){.has-tip:hover .tip-wrap{visibility:visible;opacity:1;}}
   .has-tip.tip-open .tip-wrap{visibility:visible;opacity:1;pointer-events:auto;}
@@ -124,22 +153,19 @@
   .rc-tooltip .tt-eq{font-size:.5rem;text-align:center;margin-top:4px;}
   .mat-prop{position:relative;cursor:pointer;}
 
-  /* ── Slider top-right controls ── */
   .slider-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:7px;}
   .slider-controls-right{display:flex;align-items:center;gap:5px;}
-  .region-badge{display:inline-flex;align-items:center;justify-content:center;font-size:.4rem;font-weight:700;letter-spacing:.5px;text-transform:uppercase;padding:2px 7px;border-radius:4px;border:1px solid currentColor;background:transparent;min-width:52px;transition:color .2s,border-color .2s;font-family:Inter,sans-serif;}
-  .mode-toggle{display:flex;background:var(--surface2);border:1px solid var(--border);border-radius:4px;overflow:hidden;font-size:.4rem;font-weight:700;font-family:Inter,sans-serif;}
-  .mode-toggle button{background:transparent;border:none;color:var(--text-dim);padding:3px 8px;cursor:pointer;transition:background .15s,color .15s;letter-spacing:.4px;text-transform:uppercase;}
-  .mode-toggle button.active{background:var(--accent);color:#fff;}
-  .snap-wrap{position:relative;margin-top:4px;height:10px;}
-  .snap-dot{position:absolute;width:8px;height:8px;border-radius:50%;transform:translateX(-50%);top:0;transition:background .2s;}
-  .snap-dot.yield{background:#e0a840;}
-  .snap-dot.ultimate{background:#d06030;}
-  .snap-dot.fracture{background:#c03030;}
-  .graph-tile{position:relative;}
-  .graph-region-badge{position:absolute;top:10px;right:12px;font-size:.4rem;font-weight:700;letter-spacing:.5px;text-transform:uppercase;padding:2px 7px;border-radius:4px;border:1px solid currentColor;background:var(--surface2);font-family:Inter,sans-serif;z-index:2;pointer-events:none;transition:color .2s,border-color .2s;}
+  .region-badge{display:inline-flex;align-items:center;justify-content:center;font-size:.4rem;font-weight:700;letter-spacing:.5px;text-transform:uppercase;padding:2px 0;border-radius:4px;border:1px solid currentColor;background:transparent;width:90px;transition:color .2s,border-color .2s;font-family:Inter,sans-serif;text-align:center;}
 
-  /* ── Theme toggle ── */
+  /* Fix 2: remove text-transform from mode-toggle buttons so KaTeX renders correctly */
+  .mode-toggle{display:flex;background:var(--surface2);border:1px solid var(--border);border-radius:4px;overflow:hidden;font-size:.5rem;font-weight:700;font-family:Inter,sans-serif;}
+  .mode-toggle button{background:transparent;border:none;color:var(--text-dim);padding:4px 10px;cursor:pointer;transition:background .15s,color .15s;display:flex;align-items:center;justify-content:center;min-width:32px;}
+  .mode-toggle button.active{background:var(--accent);color:#fff;}
+  .mode-toggle button .katex{font-size:.55rem;}
+
+  .graph-tile{position:relative;}
+  .graph-region-badge{position:absolute;top:10px;right:12px;font-size:.4rem;font-weight:700;letter-spacing:.5px;text-transform:uppercase;padding:2px 0;border-radius:4px;border:1px solid currentColor;background:var(--surface2);font-family:Inter,sans-serif;z-index:2;pointer-events:none;transition:color .2s,border-color .2s;width:90px;text-align:center;display:inline-flex;align-items:center;justify-content:center;}
+
   .theme-switch{display:inline-flex;align-items:center;cursor:pointer;user-select:none;}
   .theme-switch input{display:none;}
   .theme-track{width:44px;height:24px;background:var(--surface2);border:1px solid var(--border);border-radius:12px;position:relative;transition:background .25s;}
@@ -152,16 +178,14 @@
   .theme-switch input:checked + .theme-track .theme-thumb .theme-icon-moon{opacity:0;}
   .theme-switch input:checked + .theme-track .theme-thumb .theme-icon-sun{opacity:1;}
 
-  /* ── Mobile ── */
+  /* ── Mobile — layout only; font scales via clamp() above ── */
   @media(max-width:800px){
-    :root{font-size:22px;}
     .row1{flex-direction:column}
     .controls-col{width:100%;min-width:0}
     .readout-row{grid-template-columns:repeat(2,1fr)}
     .beam-tile canvas,.graph-tile canvas{height:220px}
   }
   @media(max-width:480px){
-    :root{font-size:18px;}
     .readout-row{grid-template-columns:repeat(2,1fr)}
     .beam-tile canvas,.graph-tile canvas{height:180px}
   }
@@ -201,21 +225,26 @@
           <div class="control-label" id="sliderLabel" style="margin-bottom:0;"></div>
           <div class="slider-controls-right">
             <div class="mode-toggle">
-              <button id="modeStrain" class="active" onclick="setSliderMode('strain')">ε</button>
-              <button id="modeStress" onclick="setSliderMode('stress')">σ</button>
+              <button id="modeStrain" class="active" onclick="setSliderMode('strain')"><span id="modeStrainLabel"></span></button>
+              <button id="modeStress" onclick="setSliderMode('stress')"><span id="modeStressLabel"></span></button>
             </div>
             <div class="region-badge" id="sliderRegionBadge">ELASTIC</div>
           </div>
         </div>
-        <div class="slider-row">
-          <input type="range" id="stressSlider" min="0" max="1000" step="1" value="0">
-          <input type="number" id="stressInput" min="0" max="500" step="1" value="0">
-        </div>
-        <!-- Snap stop dots: yield, ultimate, fracture -->
-        <div class="snap-wrap" id="snapWrap">
-          <div class="snap-dot yield" id="snapYield" title="Yield"></div>
-          <div class="snap-dot ultimate" id="snapUlt" title="Ultimate"></div>
-          <div class="snap-dot fracture" id="snapFrac" title="Fracture"></div>
+        <div class="slider-wrap" id="sliderWrap">
+          <div class="slider-row">
+            <input type="range" id="stressSlider" min="0" max="1000" step="1" value="0">
+            <input type="number" id="stressInput" min="0" max="500" step="1" value="0">
+          </div>
+          <!-- Snap dots overlaid on track — JS positions them relative to the range element -->
+          <div class="slider-track-overlay" id="sliderOverlay">
+            <div class="snap-tick yield" id="tickYield" style="display:none"></div>
+            <div class="snap-tooltip" id="tipYield"><div class="st-title" id="tipYieldTitle"></div><div class="st-def" id="tipYieldDef"></div></div>
+            <div class="snap-tick ultimate" id="tickUlt" style="display:none"></div>
+            <div class="snap-tooltip" id="tipUlt"><div class="st-title" id="tipUltTitle"></div><div class="st-def" id="tipUltDef"></div></div>
+            <div class="snap-tick fracture" id="tickFrac" style="display:none"></div>
+            <div class="snap-tooltip" id="tipFrac"><div class="st-title" id="tipFracTitle"></div><div class="st-def" id="tipFracDef"></div></div>
+          </div>
         </div>
       </div>
 
@@ -1291,42 +1320,122 @@ function setSliderMode(mode){
   state.sliderMode=mode;
   document.getElementById('modeStrain').classList.toggle('active',mode==='strain');
   document.getElementById('modeStress').classList.toggle('active',mode==='stress');
-  // Reset to zero when switching modes
   state.strainOverride=0;state.sigmaApplied=0;
   updateMatDisplay();refresh();
+  requestAnimationFrame(updateSnapDots);
 }
 
 function updateSnapDots(){
   const m=getMat(),cv=buildCurve(m);
-  const sl=document.getElementById('stressSlider');
-  const slMax=parseFloat(sl.max)||1000;
   const isStress=state.sliderMode==='stress';
-  // Compute slider positions for key points
-  let yieldPos, ultPos, fracPos;
-  if(isStress){
-    // slider goes 0..sigmaU in stress mode
-    yieldPos=(m.sigmaY/1e6)/slMax;
-    ultPos=1.0;
-    fracPos=null; // not reachable in stress mode
-  } else {
-    // slider goes 0..epsFrac in strain mode (0..1000 integer steps)
-    const ey=m.sigmaY/m.E;
-    const eu=cv[2].e;
-    yieldPos=ey/m.epsFrac;
-    ultPos=eu/m.epsFrac;
-    fracPos=1.0;
-  }
-  const dots=[
-    {id:'snapYield',pos:yieldPos},
-    {id:'snapUlt',  pos:ultPos},
-    {id:'snapFrac', pos:fracPos}
+  const ey=m.sigmaY/m.E, eu=cv[2].e;
+
+  const ticks=[
+    { tickId:'tickYield', tipTitleId:'tipYieldTitle', tipDefId:'tipYieldDef', tipId:'tipYield',
+      pos: isStress ? m.sigmaY/m.sigmaU : ey/m.epsFrac,
+      show: true,
+      title: isStress ? `Yield Stress \u2014 \u03c3_y = ${(m.sigmaY/1e6).toFixed(0)} MPa`
+                      : `Yield Strain \u2014 \u03b5_y = ${ey.toFixed(5)}`,
+      def:  isStress ? 'Stress at which the material first deforms plastically. Beyond this point deformation is permanent.'
+                     : 'Strain corresponding to first yield. The elastic–plastic boundary.'
+    },
+    { tickId:'tickUlt', tipTitleId:'tipUltTitle', tipDefId:'tipUltDef', tipId:'tipUlt',
+      pos: isStress ? 1.0 : eu/m.epsFrac,
+      show: true,
+      title: isStress ? `Ultimate Stress \u2014 \u03c3_u = ${(m.sigmaU/1e6).toFixed(0)} MPa`
+                      : `Ultimate Strain \u2014 \u03b5_u = ${eu.toFixed(5)}`,
+      def:  isStress ? 'Maximum stress the material can sustain before necking begins.'
+                     : 'Strain at maximum stress. Necking begins beyond this point.'
+    },
+    { tickId:'tickFrac', tipTitleId:'tipFracTitle', tipDefId:'tipFracDef', tipId:'tipFrac',
+      pos: 1.0,
+      show: !isStress,
+      title: `Fracture Strain \u2014 \u03b5_f = ${m.epsFrac.toFixed(5)}`,
+      def: 'Total strain at complete fracture — a measure of ductility.'
+    }
   ];
-  dots.forEach(({id,pos})=>{
-    const el=document.getElementById(id);
-    if(!el)return;
-    if(pos===null){el.style.display='none';return;}
-    el.style.display='block';
-    el.style.left=(pos*100)+'%';
+
+  // Position each tick relative to the actual slider element
+  const sl=document.getElementById('stressSlider');
+  const overlay=document.getElementById('sliderOverlay');
+  if(!sl||!overlay) return;
+
+  // We need the slider rect relative to the overlay's parent (.slider-wrap)
+  // Both are in the same stacking context; use getBoundingClientRect diff
+  const slRect=sl.getBoundingClientRect();
+  const wrapRect=overlay.parentElement.getBoundingClientRect();
+  const thumbR=9;
+  const trackLeft=slRect.left - wrapRect.left + thumbR;
+  const trackWidth=slRect.width - 2*thumbR;
+  // Fix 1: dots sit BELOW the track (track center + half track height + 6px gap)
+  const trackCenterY=slRect.top - wrapRect.top + slRect.height/2;
+  const dotY=trackCenterY + slRect.height/2 + 7; // 7px below the track bottom edge
+
+  ticks.forEach(t=>{
+    const tick=document.getElementById(t.tickId);
+    const tipTitle=document.getElementById(t.tipTitleId);
+    const tipDef=document.getElementById(t.tipDefId);
+    const tip=document.getElementById(t.tipId);
+    if(!tick||!tip) return;
+    tick.style.display=t.show?'block':'none';
+    tip.style.visibility='hidden'; tip.style.opacity='0';
+    if(!t.show) return;
+    const px=trackLeft+t.pos*trackWidth;
+    tick.style.left=px+'px';
+    tick.style.top=dotY+'px';
+    if(tipTitle) tipTitle.textContent=t.title;
+    if(tipDef) tipDef.textContent=t.def;
+
+    // Wire tooltip: show above the tick, always above readout tiles (fixed, z=99999)
+    const showTip=()=>{
+      const freshEl=document.getElementById(t.tickId);
+      if(!freshEl) return;
+      const tickRect=freshEl.getBoundingClientRect();
+      const tw=200;
+      let left=tickRect.left+tickRect.width/2-tw/2;
+      if(left<6) left=6;
+      if(left+tw>window.innerWidth-6) left=window.innerWidth-6-tw;
+      tip.style.width=tw+'px';
+      tip.style.position='fixed';
+      tip.style.left=left+'px';
+      const tipH=tip.offsetHeight||60;
+      const topAbove=tickRect.top-tipH-8;
+      tip.style.top=(topAbove<4?tickRect.bottom+6:topAbove)+'px';
+      tip.style.visibility='visible';
+      tip.style.opacity='1';
+    };
+    const hideTip=()=>{tip.style.visibility='hidden';tip.style.opacity='0';};
+
+    // Remove old listeners by cloning
+    const newTick=tick.cloneNode(true);
+    tick.parentNode.replaceChild(newTick,tick);
+    const freshTick=document.getElementById(t.tickId);
+    freshTick.style.display='block';
+    freshTick.style.left=px+'px';
+    freshTick.style.top=dotY+'px';
+
+    freshTick.addEventListener('mouseenter',showTip);
+    freshTick.addEventListener('mouseleave',hideTip);
+    freshTick.addEventListener('touchstart',(e)=>{
+      e.stopPropagation();
+      if(tip.style.visibility==='visible'){hideTip();}else{showTip();}
+    },{passive:true});
+    // Click to snap
+    freshTick.addEventListener('click',(e)=>{
+      e.stopPropagation();
+      if(isStress){
+        const sig=t.pos*m.sigmaU;
+        state.sigmaApplied=sig;state.strainOverride=null;
+        sl.value=Math.round(sig/1e6);
+        document.getElementById('stressInput').value=(sig/1e6).toFixed(1);
+      } else {
+        const eps=t.pos*m.epsFrac;
+        state.strainOverride=eps;state.sigmaApplied=sFromE(cv,eps);
+        sl.value=Math.round(t.pos*1000);
+        document.getElementById('stressInput').value=(eps*1000).toFixed(2);
+      }
+      refresh();
+    });
   });
 }
 
@@ -1380,26 +1489,33 @@ document.getElementById('stressInput').addEventListener('input',function(){
   refresh();
 });
 
-// ── Snap-to logic: when slider is released near a snap dot, snap to it ──
+// ── Snap-to: when slider released near a notch, snap to it ──
 document.getElementById('stressSlider').addEventListener('change',function(){
   const m=getMat(),cv=buildCurve(m);
   const v=parseFloat(this.value);
-  const snapThreshold=15; // within 1.5% of range
   const isStress=state.sliderMode==='stress';
   const ey=m.sigmaY/m.E, eu=cv[2].e;
+  const SNAP=20; // steps within which we snap
   let snaps;
   if(isStress){
     const maxS=m.sigmaU/1e6;
-    snaps=[m.sigmaY/1e6/maxS*1000, 1000];
+    snaps=[{v:Math.round(m.sigmaY/1e6),frac:m.sigmaY/m.sigmaU},{v:Math.round(maxS),frac:1}];
   } else {
-    snaps=[ey/m.epsFrac*1000, eu/m.epsFrac*1000, 1000];
+    snaps=[{v:Math.round(ey/m.epsFrac*1000),frac:ey/m.epsFrac},{v:Math.round(eu/m.epsFrac*1000),frac:eu/m.epsFrac},{v:1000,frac:1}];
   }
-  for(const sv of snaps){
-    if(Math.abs(v-sv)<snapThreshold){
-      this.value=sv;
-      // Trigger the input handler
-      this.dispatchEvent(new Event('input'));
-      break;
+  for(const s of snaps){
+    if(Math.abs(v-s.v)<SNAP){
+      this.value=s.v;
+      if(isStress){
+        const sig=s.frac*m.sigmaU;
+        state.sigmaApplied=sig;state.strainOverride=null;
+        document.getElementById('stressInput').value=(sig/1e6).toFixed(1);
+      } else {
+        const eps=s.frac*m.epsFrac;
+        state.strainOverride=eps;state.sigmaApplied=sFromE(cv,eps);
+        document.getElementById('stressInput').value=(eps*1000).toFixed(2);
+      }
+      refresh();break;
     }
   }
 });
@@ -1409,9 +1525,9 @@ function refresh(){
   drawBeam();drawGraph();updateReadout();
 }
 
-document.getElementById('materialSelect').addEventListener('change',function(){state.matKey=this.value;state.strainOverride=0;state.sigmaApplied=0;updateMatDisplay();refresh()});
+document.getElementById('materialSelect').addEventListener('change',function(){state.matKey=this.value;state.strainOverride=0;state.sigmaApplied=0;updateMatDisplay();refresh();requestAnimationFrame(updateSnapDots);});
 document.getElementById('lengthInput').addEventListener('input',function(){state.beamLength=parseFloat(this.value)||1.0;refresh()});
-window.addEventListener('resize',refresh);
+window.addEventListener('resize',()=>{refresh();requestAnimationFrame(updateSnapDots);});
 
 // ── Theme toggle ──
 document.addEventListener('DOMContentLoaded',()=>{
@@ -1463,8 +1579,11 @@ initLabels();
 state.strainOverride=0;
 buildDimInputs();
 drawXSecDiagram();
+// Render KaTeX into mode toggle buttons
+katex.render('\\varepsilon', document.getElementById('modeStrainLabel'), {throwOnError:false,displayMode:false});
+katex.render('\\sigma',      document.getElementById('modeStressLabel'), {throwOnError:false,displayMode:false});
 updateMatDisplay();
-updateSnapDots();
+requestAnimationFrame(updateSnapDots);
 refresh();
 </script>
 </body>
