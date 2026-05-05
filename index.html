@@ -10,9 +10,9 @@
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
-  /* ── Fix 1: base font 21px = 14px × 1.5 — everything in rem scales with it ── */
+  /* Font size 30px — only text sizes use rem, layout uses px so tiles don't balloon */
   :root{
-    font-size:21px;
+    font-size:30px;
     --bg:#0f1117;--surface:#181b24;--surface2:#1e2230;--border:#2a2e3d;
     --text:#e2e4ea;--text-dim:#8b90a0;--accent:#4fa3e0;
     --accent-glow:rgba(79,163,224,.15);
@@ -20,64 +20,63 @@
     --green:#40c080;--yellow:#e0a840;--orange:#d06030;--red:#c03030
   }
   *{margin:0;padding:0;box-sizing:border-box}
+  body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;font-size:1rem;line-height:1.4}
 
-  /* Fix 2: cap layout width so beam doesn't become comically wide on 27" monitors */
-  body{
-    background:var(--bg);color:var(--text);
-    font-family:'Inter',sans-serif;font-size:1rem;line-height:1.4;
-  }
+  .page-wrap{max-width:1120px;margin:0 auto;}
 
-  /* ── Fix 2: centred max-width container ── */
-  .page-wrap{
-    max-width:1100px;
-    margin:0 auto;
-  }
+  /* ── Header ── */
+  .header{padding:10px 20px;border-bottom:1px solid var(--border);background:var(--surface);display:flex;align-items:center}
+  .header h1{font-size:.6rem;font-weight:700;letter-spacing:.5px;color:var(--accent)}
+  .header .sub{font-size:.5rem;color:var(--text-dim);margin-top:2px;font-weight:500}
 
-  .header{padding:.75rem 1.3rem;border-bottom:1px solid var(--border);background:var(--surface);display:flex;align-items:center}
-  .header h1{font-size:.76rem;font-weight:700;letter-spacing:.5px;color:var(--accent)}
-  .header .sub{font-size:.62rem;color:var(--text-dim);margin-top:.1rem;font-weight:500}
-  .main{padding:.67rem;display:flex;flex-direction:column;gap:.67rem}
-  .tile{background:var(--surface);padding:.86rem 1rem;border:1px solid var(--border);border-radius:.5rem}
-  .tile-label{font-size:.57rem;font-weight:600;text-transform:uppercase;letter-spacing:1.2px;color:var(--text-dim);margin-bottom:.67rem;display:flex;align-items:center;gap:.38rem}
-  .tile-label::before{content:'';width:.29rem;height:.29rem;background:var(--accent);border-radius:50%}
+  /* ── Main layout — px gaps/padding so tiles stay compact ── */
+  .main{padding:10px;display:flex;flex-direction:column;gap:10px}
+  .tile{background:var(--surface);padding:12px 16px;border:1px solid var(--border);border-radius:8px}
+  .tile-label{font-size:.5rem;font-weight:600;text-transform:uppercase;letter-spacing:1.2px;color:var(--text-dim);margin-bottom:10px;display:flex;align-items:center;gap:7px}
+  .tile-label::before{content:'';width:6px;height:6px;background:var(--accent);border-radius:50%;flex-shrink:0}
 
-  .row1{display:flex;gap:.67rem;align-items:stretch}
-  .beam-col{flex:1;display:flex;flex-direction:column;gap:.57rem;min-width:0}
-  .beam-tile canvas{width:100%;height:16.2rem;display:block;border-radius:.38rem;background:var(--bg);border:1px solid var(--border)}
-  .slider-tile{background:var(--surface);padding:.67rem 1rem;border:1px solid var(--border);border-radius:.5rem}
+  .row1{display:flex;gap:10px;align-items:stretch;flex-wrap:nowrap}
+  .beam-col{flex:1;display:flex;flex-direction:column;gap:8px;min-width:0}
 
-  .control-label{font-size:.62rem;font-weight:600;color:var(--text-dim);letter-spacing:.8px;margin-bottom:.48rem}
+  /* Canvas heights in px — don't scale with font */
+  .beam-tile canvas{width:100%;height:280px;display:block;border-radius:6px;background:var(--bg);border:1px solid var(--border)}
+  .graph-tile canvas{width:100%;height:280px;display:block;border-radius:6px;background:var(--bg);border:1px solid var(--border)}
+
+  .slider-tile{background:var(--surface);padding:10px 16px;border:1px solid var(--border);border-radius:8px}
+
+  .control-label{font-size:.5rem;font-weight:600;color:var(--text-dim);letter-spacing:.6px;margin-bottom:8px}
   #sliderLabel{text-transform:none;letter-spacing:normal;}
-  .slider-row{display:flex;align-items:center;gap:.57rem}
-  .slider-row input[type="range"]{flex:1;-webkit-appearance:none;appearance:none;height:.33rem;border-radius:.2rem;background:var(--surface2);outline:none;border:1px solid var(--border)}
-  .slider-row input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:.95rem;height:.95rem;border-radius:50%;background:var(--accent);cursor:pointer;border:2px solid var(--bg);box-shadow:0 0 .48rem var(--accent-glow)}
-  .slider-row input[type="range"]::-moz-range-thumb{width:.95rem;height:.95rem;border-radius:50%;background:var(--accent);cursor:pointer;border:2px solid var(--bg)}
-  .slider-row input[type="number"]{width:3.3rem;background:var(--bg);border:1px solid var(--border);border-radius:.38rem;color:var(--text);font-family:'Inter',sans-serif;font-size:.67rem;font-weight:500;padding:.33rem .38rem;text-align:right;outline:none}
-  .slider-row input[type="number"]:focus{border-color:var(--accent);box-shadow:0 0 0 .1rem var(--accent-glow)}
-  .unit{font-size:.62rem;color:var(--text-dim);min-width:1.9rem;font-weight:500}
 
-  select{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:.38rem;color:var(--text);font-family:'Inter',sans-serif;font-size:.67rem;font-weight:500;padding:.43rem .57rem;outline:none;cursor:pointer}
+  .slider-row{display:flex;align-items:center;gap:10px}
+  .slider-row input[type="range"]{flex:1;-webkit-appearance:none;appearance:none;height:6px;border-radius:3px;background:var(--surface2);outline:none;border:1px solid var(--border)}
+  .slider-row input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;background:var(--accent);cursor:pointer;border:2px solid var(--bg);box-shadow:0 0 8px var(--accent-glow)}
+  .slider-row input[type="range"]::-moz-range-thumb{width:18px;height:18px;border-radius:50%;background:var(--accent);cursor:pointer;border:2px solid var(--bg)}
+  .slider-row input[type="number"]{width:72px;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:'Inter',sans-serif;font-size:.55rem;font-weight:500;padding:5px 7px;text-align:right;outline:none}
+  .slider-row input[type="number"]:focus{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-glow)}
+  .unit{font-size:.5rem;color:var(--text-dim);min-width:32px;font-weight:500}
+
+  select{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:'Inter',sans-serif;font-size:.55rem;font-weight:500;padding:7px 10px;outline:none;cursor:pointer}
   select:focus{border-color:var(--accent)}
 
-  .mat-prop .mp-label{font-size:.57rem;color:var(--text-dim);font-weight:500}
-  .mat-prop .mp-value{font-size:.62rem;font-weight:600;color:var(--text)}
-  .mat-prop .katex{font-size:.62rem}
+  .mat-prop .mp-label{font-size:.47rem;color:var(--text-dim);font-weight:500}
+  .mat-prop .mp-label .katex{font-size:.47rem}
+  .mat-prop .mp-value{font-size:.5rem;font-weight:600;color:var(--text)}
 
-  .dims-row{display:flex;align-items:center;gap:.48rem;margin-top:.19rem}
-  .dims-row .katex{font-size:.67rem}
-  .dims-row input[type="number"]{width:3rem;background:var(--bg);border:1px solid var(--border);border-radius:.38rem;color:var(--text);font-family:'Inter',sans-serif;font-size:.67rem;font-weight:500;padding:.33rem .38rem;text-align:right;outline:none}
+  .dims-row{display:flex;align-items:center;gap:8px;margin-top:3px}
+  .dims-row .katex{font-size:.55rem}
+  .dims-row input[type="number"]{width:60px;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:'Inter',sans-serif;font-size:.55rem;font-weight:500;padding:5px 7px;text-align:right;outline:none}
   .dims-row input[type="number"]:focus{border-color:var(--accent)}
 
   .graph-tile{position:relative}
-  .graph-tile canvas{width:100%;height:16.2rem;display:block;border-radius:.38rem;background:var(--bg);border:1px solid var(--border)}
-  .status-badge{font-size:.62rem;font-weight:700;letter-spacing:.5px;transition:color .2s;margin-top:.57rem;display:inline-block}
+  .status-badge{font-size:.5rem;font-weight:700;letter-spacing:.5px;transition:color .2s;margin-top:8px;display:inline-block}
 
-  .readout-row{display:grid;grid-template-columns:repeat(4,1fr);gap:.29rem;flex-shrink:0;}
-  .readout-card{background:var(--surface);border:1px solid var(--border);border-radius:.38rem;padding:.29rem .38rem;text-align:center;position:relative;cursor:pointer;overflow:visible;}
-  .rc-label{font-size:.62rem;color:var(--text-dim);margin-bottom:.1rem;font-weight:600;display:flex;align-items:center;justify-content:center;min-height:.95rem}
-  .rc-label .katex{font-size:.67rem}
-  .rc-value{font-size:.62rem;font-weight:700;color:var(--text)}
-  .rc-unit{font-size:.48rem;color:var(--text-dim);font-weight:500}
+  /* Readout grid — fixed px gaps/padding */
+  .readout-row{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;flex-shrink:0;}
+  .readout-card{background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:5px 8px;text-align:center;position:relative;cursor:pointer;overflow:visible;}
+  .rc-label{font-size:.55rem;color:var(--text-dim);margin-bottom:2px;font-weight:600;display:flex;align-items:center;justify-content:center;min-height:18px}
+  .rc-label .katex{font-size:.58rem}
+  .rc-value{font-size:.52rem;font-weight:700;color:var(--text)}
+  .rc-unit{font-size:.42rem;color:var(--text-dim);font-weight:500}
 
   /* ── Light theme ── */
   body.light{--bg:#e8ebf0;--surface:#f0f2f6;--surface2:#dde0e8;--border:#b8bdd0;--text:#1e2130;--text-dim:#4a5068;--accent:#2a7db5;--accent-glow:rgba(42,125,181,.15);--tension:#b02020;--compression:#1a60a0;--green:#207040;--yellow:#a06800;--orange:#904010;--red:#800000}
@@ -87,83 +86,86 @@
   body.light canvas{border-color:var(--border)}
 
   /* ── Cross-section shape selector ── */
-  .shape-row{display:flex;gap:.29rem;margin-bottom:.48rem;}
-  .shape-btn{flex:1;background:var(--bg);border:1px solid var(--border);border-radius:.33rem;padding:.29rem .19rem;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:.14rem;transition:border-color .15s,background .15s;}
+  .shape-row{display:flex;gap:5px;margin-bottom:8px;}
+  .shape-btn{flex:1;background:var(--bg);border:1px solid var(--border);border-radius:5px;padding:5px 3px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px;transition:border-color .15s,background .15s;}
   .shape-btn:hover,.shape-btn:focus{border-color:var(--accent);background:var(--surface2);}
   .shape-btn.active{border-color:var(--accent);background:var(--accent-glow);}
-  .shape-btn svg{width:1.14rem;height:1.14rem;}
-  .shape-btn span{font-size:.43rem;color:var(--text-dim);font-weight:600;letter-spacing:.4px;text-transform:uppercase;}
+  .shape-btn svg{width:20px;height:20px;}
+  .shape-btn span{font-size:.4rem;color:var(--text-dim);font-weight:600;letter-spacing:.4px;text-transform:uppercase;}
 
   /* ── 2×2 material props grid ── */
-  .mat-props-grid{display:grid;grid-template-columns:1fr 1fr;gap:.24rem;margin-top:.38rem;}
-  .mat-prop-sm{background:var(--bg);border-radius:.29rem;padding:.29rem .38rem;border:1px solid var(--border);display:flex;flex-direction:column;gap:.05rem;position:relative;cursor:pointer;}
-  .mat-prop-sm .mp-label{font-size:.52rem;color:var(--text-dim);font-weight:500;}
-  .mat-prop-sm .mp-label .katex{font-size:.52rem;}
-  .mat-prop-sm .mp-value{font-size:.57rem;font-weight:600;color:var(--text);}
+  .mat-props-grid{display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-top:6px;}
+  .mat-prop-sm{background:var(--bg);border-radius:5px;padding:5px 7px;border:1px solid var(--border);display:flex;flex-direction:column;gap:1px;position:relative;cursor:pointer;}
+  .mat-prop-sm .mp-label{font-size:.44rem;color:var(--text-dim);font-weight:500;}
+  .mat-prop-sm .mp-label .katex{font-size:.44rem;}
+  .mat-prop-sm .mp-value{font-size:.47rem;font-weight:600;color:var(--text);}
 
   /* ── Cross-section diagram ── */
-  .xsec-wrap{margin-top:.48rem;background:var(--bg);border:1px solid var(--border);border-radius:.38rem;padding:.48rem;display:flex;justify-content:center;align-items:center;cursor:help;}
+  .xsec-wrap{margin-top:8px;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:8px;display:flex;justify-content:center;align-items:center;cursor:help;}
   .xsec-wrap svg{max-width:100%;height:auto;overflow:visible;}
 
-  /* ── controls-col ── */
-  .controls-col{width:13.8rem;min-width:12rem;flex-shrink:0}
-  .row1{flex-wrap:nowrap}
+  /* ── Controls column — px width ── */
+  .controls-col{width:260px;min-width:220px;flex-shrink:0}
 
   /* ── Beam tile label ── */
-  .beam-tile-label{display:flex;justify-content:space-between;align-items:center;margin-bottom:.67rem;text-transform:uppercase;font-size:.57rem;font-weight:600;letter-spacing:1.2px;color:var(--text-dim);}
-  .beam-tile-label-left{display:flex;align-items:center;gap:.38rem;}
-  .beam-tile-label-left::before{content:'';width:.29rem;height:.29rem;background:var(--accent);border-radius:50%;flex-shrink:0;}
+  .beam-tile-label{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;text-transform:uppercase;font-size:.48rem;font-weight:600;letter-spacing:1.2px;color:var(--text-dim);}
+  .beam-tile-label-left{display:flex;align-items:center;gap:7px;}
+  .beam-tile-label-left::before{content:'';width:6px;height:6px;background:var(--accent);border-radius:50%;flex-shrink:0;}
 
-  /* ── Readout card ── */
   .readout-card{position:relative;overflow:visible;}
 
-  /* ── Tooltips ── hover on desktop, tap toggle on touch ── */
-  .tip-wrap{
-    visibility:hidden;opacity:0;
-    position:fixed;z-index:9999;pointer-events:none;
-    transition:opacity .15s;
-  }
-  /* desktop hover */
-  @media(hover:hover){
-    .has-tip:hover .tip-wrap{visibility:visible;opacity:1;}
-  }
-  /* touch: toggled via JS .tip-open class */
+  /* ── Tooltips ── */
+  .tip-wrap{visibility:hidden;opacity:0;position:fixed;z-index:9999;pointer-events:none;transition:opacity .15s;}
+  @media(hover:hover){.has-tip:hover .tip-wrap{visibility:visible;opacity:1;}}
   .has-tip.tip-open .tip-wrap{visibility:visible;opacity:1;pointer-events:auto;}
-
-  .rc-tooltip{
-    background:var(--surface2);border:1px solid var(--border);border-radius:.38rem;
-    padding:.48rem .62rem;width:11rem;
-    box-shadow:0 .29rem 1.14rem rgba(0,0,0,.5);
-  }
-  .rc-tooltip .tt-title{font-size:.52rem;font-weight:700;color:var(--accent);margin-bottom:.19rem;letter-spacing:.4px;}
-  .rc-tooltip .tt-def{font-size:.52rem;color:var(--text-dim);line-height:1.5;margin-bottom:.29rem;}
-  .rc-tooltip .tt-eq{font-size:.57rem;text-align:center;margin-top:.19rem;}
+  .rc-tooltip{background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:10px 13px;width:240px;box-shadow:0 6px 24px rgba(0,0,0,.5);}
+  .rc-tooltip .tt-title{font-size:.47rem;font-weight:700;color:var(--accent);margin-bottom:4px;letter-spacing:.4px;}
+  .rc-tooltip .tt-def{font-size:.47rem;color:var(--text-dim);line-height:1.5;margin-bottom:6px;}
+  .rc-tooltip .tt-eq{font-size:.5rem;text-align:center;margin-top:4px;}
   .mat-prop{position:relative;cursor:pointer;}
+
+  /* ── Slider top-right controls ── */
+  .slider-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:7px;}
+  .slider-controls-right{display:flex;align-items:center;gap:5px;}
+  .region-badge{display:inline-flex;align-items:center;justify-content:center;font-size:.4rem;font-weight:700;letter-spacing:.5px;text-transform:uppercase;padding:2px 7px;border-radius:4px;border:1px solid currentColor;background:transparent;min-width:52px;transition:color .2s,border-color .2s;font-family:Inter,sans-serif;}
+  .mode-toggle{display:flex;background:var(--surface2);border:1px solid var(--border);border-radius:4px;overflow:hidden;font-size:.4rem;font-weight:700;font-family:Inter,sans-serif;}
+  .mode-toggle button{background:transparent;border:none;color:var(--text-dim);padding:3px 8px;cursor:pointer;transition:background .15s,color .15s;letter-spacing:.4px;text-transform:uppercase;}
+  .mode-toggle button.active{background:var(--accent);color:#fff;}
+  .snap-wrap{position:relative;margin-top:4px;height:10px;}
+  .snap-dot{position:absolute;width:8px;height:8px;border-radius:50%;transform:translateX(-50%);top:0;transition:background .2s;}
+  .snap-dot.yield{background:#e0a840;}
+  .snap-dot.ultimate{background:#d06030;}
+  .snap-dot.fracture{background:#c03030;}
+  .graph-tile{position:relative;}
+  .graph-region-badge{position:absolute;top:10px;right:12px;font-size:.4rem;font-weight:700;letter-spacing:.5px;text-transform:uppercase;padding:2px 7px;border-radius:4px;border:1px solid currentColor;background:var(--surface2);font-family:Inter,sans-serif;z-index:2;pointer-events:none;transition:color .2s,border-color .2s;}
 
   /* ── Theme toggle ── */
   .theme-switch{display:inline-flex;align-items:center;cursor:pointer;user-select:none;}
   .theme-switch input{display:none;}
-  .theme-track{width:2.38rem;height:1.24rem;background:var(--surface2);border:1px solid var(--border);border-radius:.62rem;position:relative;transition:background .25s;}
+  .theme-track{width:44px;height:24px;background:var(--surface2);border:1px solid var(--border);border-radius:12px;position:relative;transition:background .25s;}
   .theme-switch input:checked + .theme-track{background:#f0c040;}
-  .theme-thumb{position:absolute;top:.14rem;left:.14rem;width:.95rem;height:.95rem;border-radius:50%;background:#1e2230;transition:left .25s,background .25s;box-shadow:0 1px 4px rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center;font-size:.57rem;line-height:1;}
-  .theme-switch input:checked + .theme-track .theme-thumb{left:1.29rem;background:#fff9e6;}
+  .theme-thumb{position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:#1e2230;transition:left .25s,background .25s;box-shadow:0 1px 4px rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center;font-size:.47rem;line-height:1;}
+  .theme-switch input:checked + .theme-track .theme-thumb{left:23px;background:#fff9e6;}
   .theme-icon{position:absolute;line-height:1;}
   .theme-icon-moon{opacity:1;transition:opacity .2s;}
   .theme-icon-sun{opacity:0;transition:opacity .2s;}
   .theme-switch input:checked + .theme-track .theme-thumb .theme-icon-moon{opacity:0;}
   .theme-switch input:checked + .theme-track .theme-thumb .theme-icon-sun{opacity:1;}
 
-  /* ── Mobile: stack layout ── */
-  @media(max-width:700px){
-    :root{font-size:18px;}
+  /* ── Mobile ── */
+  @media(max-width:800px){
+    :root{font-size:22px;}
     .row1{flex-direction:column}
     .controls-col{width:100%;min-width:0}
     .readout-row{grid-template-columns:repeat(2,1fr)}
+    .beam-tile canvas,.graph-tile canvas{height:220px}
   }
-  @media(max-width:420px){
-    :root{font-size:16px;}
+  @media(max-width:480px){
+    :root{font-size:18px;}
     .readout-row{grid-template-columns:repeat(2,1fr)}
+    .beam-tile canvas,.graph-tile canvas{height:180px}
   }
+</style>
 </style>
 </head>
 <body>
@@ -195,10 +197,25 @@
         <canvas id="beamCanvas"></canvas>
       </div>
       <div class="slider-tile">
-        <div class="control-label" id="sliderLabel"></div>
+        <div class="slider-header">
+          <div class="control-label" id="sliderLabel" style="margin-bottom:0;"></div>
+          <div class="slider-controls-right">
+            <div class="mode-toggle">
+              <button id="modeStrain" class="active" onclick="setSliderMode('strain')">ε</button>
+              <button id="modeStress" onclick="setSliderMode('stress')">σ</button>
+            </div>
+            <div class="region-badge" id="sliderRegionBadge">ELASTIC</div>
+          </div>
+        </div>
         <div class="slider-row">
-          <input type="range" id="stressSlider" min="0" max="500" step="1" value="0">
+          <input type="range" id="stressSlider" min="0" max="1000" step="1" value="0">
           <input type="number" id="stressInput" min="0" max="500" step="1" value="0">
+        </div>
+        <!-- Snap stop dots: yield, ultimate, fracture -->
+        <div class="snap-wrap" id="snapWrap">
+          <div class="snap-dot yield" id="snapYield" title="Yield"></div>
+          <div class="snap-dot ultimate" id="snapUlt" title="Ultimate"></div>
+          <div class="snap-dot fracture" id="snapFrac" title="Fracture"></div>
         </div>
       </div>
 
@@ -296,8 +313,8 @@
 
   <div class="tile graph-tile">
     <div class="tile-label" id="graphLabel"></div>
+    <div class="graph-region-badge" id="graphRegionBadge">ELASTIC</div>
     <canvas id="graphCanvas"></canvas>
-    <div class="status-badge" id="statusBadge">ELASTIC</div>
   </div>
 </div>
 
@@ -575,7 +592,7 @@ const shapes = {
   }
 };
 
-let state={sigmaApplied:0,matKey:'steel',beamLength:1.0,strainOverride:null,shapeKey:'rect',dims:{b:100,h:100}};
+let state={sigmaApplied:0,matKey:'steel',beamLength:1.0,strainOverride:null,shapeKey:'rect',dims:{b:100,h:100},sliderMode:'strain'};
 
 function getMat(){return materials[state.matKey]}
 function getShape(){return shapes[state.shapeKey]}
@@ -587,7 +604,7 @@ function getNAFrac(){return (getShape().getNAFrac||((d)=>0.5))(state.dims)}
 function getWebFrac(){return (getShape().getWebFrac||((d)=>1.0))(state.dims)}
 
 // Zoom: 1.0=default, range 0.33 (3x out) to 2.0 (2x in)
-let beamZoom=1.0;
+let beamZoom=0.75;
 const zoomSteps=[0.33,0.5,0.75,1.0,1.5,2.0];
 document.addEventListener('DOMContentLoaded',()=>{
   document.getElementById('zoomIn').addEventListener('click',()=>{
@@ -822,7 +839,11 @@ function compute(){
   const m=getMat(),I=getI(),c=getC(),cv=buildCurve(m);
   const ctop=getCtop(), cbot=getCbot();
   let eps,sig;
-  if(state.strainOverride!==null){
+  if(state.sliderMode==='stress'){
+    // Stress-controlled: clamp to sigmaU, no fracture
+    sig=Math.min(state.sigmaApplied, m.sigmaU);
+    eps=eFromS(cv,sig);
+  } else if(state.strainOverride!==null){
     eps=state.strainOverride;
     sig=sFromE(cv,eps);
   } else {
@@ -830,14 +851,12 @@ function compute(){
     eps=eFromS(cv,sig);
   }
   const M=sig*I/c, kap=c>0?eps/c:0, rho=kap>1e-12?1/kap:Infinity;
-  // Stress at top (compression, negative) and bottom (tension, positive)
-  const sigTop = -M*ctop/I;  // negative = compression
-  const sigBot =  M*cbot/I;  // positive = tension
+  const sigTop=-M*ctop/I, sigBot=M*cbot/I;
   const ey=m.sigmaY/m.E, eu=cv[2].e;
   let region='ELASTIC';
-  if(eps>=m.epsFrac*0.97)region='FRACTURE';
-  else if(eps>=eu)region='NECKING';
-  else if(eps>=ey)region='HARDENING';
+  if(state.sliderMode!=='stress' && eps>=m.epsFrac*0.97) region='FRACTURE';
+  else if(eps>=eu) region='NECKING';
+  else if(eps>=ey) region='HARDENING';
   return{sig,eps,M,kap,rho,cv,ey,eu,region,mat:m,sigTop,sigBot};
 }
 
@@ -1153,15 +1172,6 @@ function drawGraph(){
     if(rw>55)ctx.fillText(rg.name,(toX(rg.x0)+toX(rg.x1))/2,mt+18);
   });
 
-  // Update status badge
-  const badge=document.getElementById('statusBadge');
-  badge.textContent=res.region;
-  const regionColors=isLight
-    ?{ELASTIC:'#207040',HARDENING:'#906000',NECKING:'#904010',FRACTURE:'#700000'}
-    :{ELASTIC:'#40c080',HARDENING:'#e0a840',NECKING:'#d06030',FRACTURE:'#c03030'};
-  badge.style.color=regionColors[res.region]||regionColors.ELASTIC;
-  badge.style.borderColor=regionColors[res.region]||'var(--border)';
-
   // Curve
   ctx.strokeStyle=mat.color;ctx.lineWidth=2.8;ctx.beginPath();
   for(let i=0;i<=300;i++){const e=(i/300)*mat.epsFrac,s=sFromE(cv,e);i===0?ctx.moveTo(toX(e),toY(s)):ctx.lineTo(toX(e),toY(s))}
@@ -1251,42 +1261,153 @@ function updateReadout(){
 }
 
 function updateMatDisplay(){
-  const m=getMat();
+  const m=getMat(),cv=buildCurve(m);
   document.getElementById('matE').textContent=(m.E/1e9).toFixed(1)+' GPa';
   document.getElementById('matYield').textContent=(m.sigmaY/1e6).toFixed(0)+' MPa';
   document.getElementById('matUlt').textContent=(m.sigmaU/1e6).toFixed(0)+' MPa';
   document.getElementById('matFrac').textContent=m.epsFrac.toFixed(3);
-  // Slider now controls strain 0..epsFrac (×1000 for slider integer steps)
   const sl=document.getElementById('stressSlider'),ni=document.getElementById('stressInput');
-  const maxStrain=m.epsFrac;
-  sl.min=0;sl.max=1000;sl.step=1;
-  ni.min=0;ni.max=(maxStrain*1000).toFixed(1);ni.step=0.1;
-  const cv=buildCurve(m);
-  const curStrain=state.strainOverride!==null?state.strainOverride:eFromS(cv,state.sigmaApplied);
-  const sliderVal=Math.round(Math.min(curStrain/maxStrain,1)*1000);
-  sl.value=sliderVal;
-  ni.value=(curStrain*1000).toFixed(1);
-  tex('sliderLabel','\\text{Applied Strain} \\;(\\varepsilon \\times 10^{-3})');
+  if(state.sliderMode==='strain'){
+    sl.min=0;sl.max=1000;sl.step=1;
+    ni.min=0;ni.max=(m.epsFrac*1000).toFixed(2);ni.step=0.01;
+    const curEps=state.strainOverride!==null?state.strainOverride:eFromS(cv,state.sigmaApplied);
+    sl.value=Math.round(Math.min(curEps/m.epsFrac,1)*1000);
+    ni.value=(curEps*1000).toFixed(2);
+    tex('sliderLabel','\\text{Applied Strain}\\;(\\varepsilon)');
+  } else {
+    const maxS=m.sigmaU/1e6;
+    sl.min=0;sl.max=Math.round(maxS);sl.step=1;
+    ni.min=0;ni.max=maxS.toFixed(0);ni.step=1;
+    const curSig=state.sigmaApplied/1e6;
+    sl.value=Math.round(Math.min(curSig,maxS));
+    ni.value=curSig.toFixed(1);
+    tex('sliderLabel','\\text{Applied Stress}\\;(\\sigma,\\text{ MPa})');
+  }
+  updateSnapDots();
+}
+
+// ── Slider mode: 'strain' or 'stress' ──
+function setSliderMode(mode){
+  state.sliderMode=mode;
+  document.getElementById('modeStrain').classList.toggle('active',mode==='strain');
+  document.getElementById('modeStress').classList.toggle('active',mode==='stress');
+  // Reset to zero when switching modes
+  state.strainOverride=0;state.sigmaApplied=0;
+  updateMatDisplay();refresh();
+}
+
+function updateSnapDots(){
+  const m=getMat(),cv=buildCurve(m);
+  const sl=document.getElementById('stressSlider');
+  const slMax=parseFloat(sl.max)||1000;
+  const isStress=state.sliderMode==='stress';
+  // Compute slider positions for key points
+  let yieldPos, ultPos, fracPos;
+  if(isStress){
+    // slider goes 0..sigmaU in stress mode
+    yieldPos=(m.sigmaY/1e6)/slMax;
+    ultPos=1.0;
+    fracPos=null; // not reachable in stress mode
+  } else {
+    // slider goes 0..epsFrac in strain mode (0..1000 integer steps)
+    const ey=m.sigmaY/m.E;
+    const eu=cv[2].e;
+    yieldPos=ey/m.epsFrac;
+    ultPos=eu/m.epsFrac;
+    fracPos=1.0;
+  }
+  const dots=[
+    {id:'snapYield',pos:yieldPos},
+    {id:'snapUlt',  pos:ultPos},
+    {id:'snapFrac', pos:fracPos}
+  ];
+  dots.forEach(({id,pos})=>{
+    const el=document.getElementById(id);
+    if(!el)return;
+    if(pos===null){el.style.display='none';return;}
+    el.style.display='block';
+    el.style.left=(pos*100)+'%';
+  });
+}
+
+function updateRegionBadges(region){
+  const colors={
+    ELASTIC:{dark:'#40c080',light:'#207040'},
+    HARDENING:{dark:'#e0a840',light:'#906000'},
+    NECKING:{dark:'#d06030',light:'#904010'},
+    FRACTURE:{dark:'#c03030',light:'#700000'}
+  };
+  const isLight=document.body.classList.contains('light');
+  const c=(colors[region]||colors.ELASTIC)[isLight?'light':'dark'];
+  ['sliderRegionBadge','graphRegionBadge'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el){el.textContent=region;el.style.color=c;el.style.borderColor=c;}
+  });
 }
 
 document.getElementById('stressSlider').addEventListener('input',function(){
-  const m=getMat();
-  const eps=(parseFloat(this.value)/1000)*m.epsFrac;
-  state.strainOverride=eps;
-  state.sigmaApplied=sFromE(buildCurve(m),eps);
-  document.getElementById('stressInput').value=(eps*1000).toFixed(1);
+  const m=getMat(),cv=buildCurve(m);
+  const v=parseFloat(this.value);
+  if(state.sliderMode==='strain'){
+    const eps=(v/1000)*m.epsFrac;
+    state.strainOverride=eps;
+    state.sigmaApplied=sFromE(cv,eps);
+    document.getElementById('stressInput').value=(eps*1000).toFixed(2);
+  } else {
+    // stress mode: slider 0..sigmaU MPa
+    const sig=v*1e6;
+    state.sigmaApplied=sig;
+    state.strainOverride=null;
+    document.getElementById('stressInput').value=(sig/1e6).toFixed(1);
+  }
   refresh();
 });
+
 document.getElementById('stressInput').addEventListener('input',function(){
-  const m=getMat();
-  const eps=(parseFloat(this.value)||0)/1000;
-  const clampedEps=Math.min(eps,m.epsFrac);
-  state.strainOverride=clampedEps;
-  state.sigmaApplied=sFromE(buildCurve(m),clampedEps);
-  document.getElementById('stressSlider').value=Math.round(clampedEps/m.epsFrac*1000);
+  const m=getMat(),cv=buildCurve(m);
+  const v=parseFloat(this.value)||0;
+  if(state.sliderMode==='strain'){
+    const eps=Math.min(v/1000,m.epsFrac);
+    state.strainOverride=eps;
+    state.sigmaApplied=sFromE(cv,eps);
+    document.getElementById('stressSlider').value=Math.round(eps/m.epsFrac*1000);
+  } else {
+    const sig=Math.min(v,m.sigmaU/1e6)*1e6;
+    state.sigmaApplied=sig;
+    state.strainOverride=null;
+    document.getElementById('stressSlider').value=Math.round(sig/1e6);
+  }
   refresh();
 });
-function refresh(){drawBeam();drawGraph();updateReadout()}
+
+// ── Snap-to logic: when slider is released near a snap dot, snap to it ──
+document.getElementById('stressSlider').addEventListener('change',function(){
+  const m=getMat(),cv=buildCurve(m);
+  const v=parseFloat(this.value);
+  const snapThreshold=15; // within 1.5% of range
+  const isStress=state.sliderMode==='stress';
+  const ey=m.sigmaY/m.E, eu=cv[2].e;
+  let snaps;
+  if(isStress){
+    const maxS=m.sigmaU/1e6;
+    snaps=[m.sigmaY/1e6/maxS*1000, 1000];
+  } else {
+    snaps=[ey/m.epsFrac*1000, eu/m.epsFrac*1000, 1000];
+  }
+  for(const sv of snaps){
+    if(Math.abs(v-sv)<snapThreshold){
+      this.value=sv;
+      // Trigger the input handler
+      this.dispatchEvent(new Event('input'));
+      break;
+    }
+  }
+});
+function refresh(){
+  const r=compute();
+  updateRegionBadges(r.region);
+  drawBeam();drawGraph();updateReadout();
+}
 
 document.getElementById('materialSelect').addEventListener('change',function(){state.matKey=this.value;state.strainOverride=0;state.sigmaApplied=0;updateMatDisplay();refresh()});
 document.getElementById('lengthInput').addEventListener('input',function(){state.beamLength=parseFloat(this.value)||1.0;refresh()});
@@ -1297,43 +1418,53 @@ document.addEventListener('DOMContentLoaded',()=>{
   const cb=document.getElementById('themeToggle');
   if(cb){ cb.addEventListener('change',()=>{ document.body.classList.toggle('light',cb.checked); refresh(); }); }
 
-  // ── Fix 3: touch tooltip toggle — tap opens, tap outside or same closes ──
+  // ── Fix 2 & 3: touch tooltip — tap shows popup, scroll does not ──
   let openTip = null;
+  let touchStartX=0, touchStartY=0, touchStartTime=0, touchMoved=false;
+  const SCROLL_THRESHOLD=8; // px of movement = scroll intent
+  const TAP_MAX_MS=350;      // longer than this = not a tap
+
   document.addEventListener('touchstart', e => {
+    const t=e.touches[0];
+    touchStartX=t.clientX; touchStartY=t.clientY;
+    touchStartTime=Date.now(); touchMoved=false;
+  }, {passive:true});
+
+  document.addEventListener('touchmove', e => {
+    const t=e.touches[0];
+    const dx=Math.abs(t.clientX-touchStartX), dy=Math.abs(t.clientY-touchStartY);
+    if(dx>SCROLL_THRESHOLD||dy>SCROLL_THRESHOLD) touchMoved=true;
+  }, {passive:true});
+
+  document.addEventListener('touchend', e => {
+    const elapsed=Date.now()-touchStartTime;
+    // Only treat as tap if: short duration, didn't scroll
+    if(touchMoved || elapsed>TAP_MAX_MS){ touchMoved=false; return; }
+    touchMoved=false;
     const card = e.target.closest('.has-tip');
-    if (card) {
-      e.preventDefault(); // stop the touch from also firing hover
-      if (openTip && openTip !== card) {
-        openTip.classList.remove('tip-open');
-      }
-      if (card.classList.contains('tip-open')) {
-        card.classList.remove('tip-open');
-        openTip = null;
+    if(card){
+      if(openTip && openTip!==card){ openTip.classList.remove('tip-open'); openTip=null; }
+      if(card.classList.contains('tip-open')){
+        card.classList.remove('tip-open'); openTip=null;
       } else {
-        card.classList.add('tip-open');
-        openTip = card;
-        // position the tip
-        const wrap = card.querySelector('.tip-wrap');
-        if (wrap) positionTip(card, wrap);
+        card.classList.add('tip-open'); openTip=card;
+        const wrap=card.querySelector('.tip-wrap');
+        if(wrap) positionTip(card,wrap);
       }
     } else {
-      // tap outside — close any open tip
-      if (openTip) {
-        openTip.classList.remove('tip-open');
-        openTip = null;
-      }
+      if(openTip){ openTip.classList.remove('tip-open'); openTip=null; }
     }
-  }, { passive: false });
+  }, {passive:true});
 });
 
 // INIT
-// Set default dims for initial shape
 state.dims={b:100,h:100};
 initLabels();
 state.strainOverride=0;
 buildDimInputs();
 drawXSecDiagram();
 updateMatDisplay();
+updateSnapDots();
 refresh();
 </script>
 </body>
