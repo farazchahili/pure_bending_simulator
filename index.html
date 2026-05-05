@@ -2,80 +2,84 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<!-- Fix 2: viewport stays at device width but we'll handle sizing via max-width + rem -->
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Pure Bending Simulation</title>
-<!-- KaTeX for LaTeX math rendering -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
 <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-  :root{--bg:#0f1117;--surface:#181b24;--surface2:#1e2230;--border:#2a2e3d;--text:#e2e4ea;--text-dim:#8b90a0;--accent:#4fa3e0;--accent-glow:rgba(79,163,224,.15);--tension:#e05050;--compression:#4a90d9;--green:#40c080;--yellow:#e0a840;--orange:#d06030;--red:#c03030}
+
+  /* ── Fix 1: base font 21px = 14px × 1.5 — everything in rem scales with it ── */
+  :root{
+    font-size:21px;
+    --bg:#0f1117;--surface:#181b24;--surface2:#1e2230;--border:#2a2e3d;
+    --text:#e2e4ea;--text-dim:#8b90a0;--accent:#4fa3e0;
+    --accent-glow:rgba(79,163,224,.15);
+    --tension:#e05050;--compression:#4a90d9;
+    --green:#40c080;--yellow:#e0a840;--orange:#d06030;--red:#c03030
+  }
   *{margin:0;padding:0;box-sizing:border-box}
-  body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;font-size:14px;line-height:1.4}
-  .header{padding:16px 28px;border-bottom:1px solid var(--border);background:var(--surface);display:flex;align-items:center}
-  .header h1{font-family:'Inter',sans-serif;font-size:16px;font-weight:700;letter-spacing:.5px;color:var(--accent)}
-  .header .sub{font-size:13px;color:var(--text-dim);font-family:'Inter',sans-serif;margin-top:2px;font-weight:500}
-  .main{max-width:100%;margin:0 auto;padding:14px;display:flex;flex-direction:column;gap:14px}
-  .tile{background:var(--surface);padding:18px 22px;border:1px solid var(--border);border-radius:10px}
-  .tile-label{font-family:'Inter',sans-serif;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:1.2px;color:var(--text-dim);margin-bottom:14px;display:flex;align-items:center;gap:8px}
-  .tile-label::before{content:'';width:6px;height:6px;background:var(--accent);border-radius:50%}
 
-  .row1{display:flex;gap:14px;align-items:stretch}
-  .beam-col{flex:1;display:flex;flex-direction:column;gap:12px;min-width:0}
-  .beam-tile canvas{width:100%;height:340px;display:block;border-radius:8px;background:var(--bg);border:1px solid var(--border)}
-  .slider-tile{background:var(--surface);padding:14px 22px;border:1px solid var(--border);border-radius:10px}
+  /* Fix 2: cap layout width so beam doesn't become comically wide on 27" monitors */
+  body{
+    background:var(--bg);color:var(--text);
+    font-family:'Inter',sans-serif;font-size:1rem;line-height:1.4;
+  }
 
-  .control-label{font-size:13px;font-weight:600;color:var(--text-dim);letter-spacing:.8px;margin-bottom:10px;font-family:'Inter',sans-serif}
-  /* sliderLabel is rendered by KaTeX so must NOT have text-transform */
+  /* ── Fix 2: centred max-width container ── */
+  .page-wrap{
+    max-width:1100px;
+    margin:0 auto;
+  }
+
+  .header{padding:.75rem 1.3rem;border-bottom:1px solid var(--border);background:var(--surface);display:flex;align-items:center}
+  .header h1{font-size:.76rem;font-weight:700;letter-spacing:.5px;color:var(--accent)}
+  .header .sub{font-size:.62rem;color:var(--text-dim);margin-top:.1rem;font-weight:500}
+  .main{padding:.67rem;display:flex;flex-direction:column;gap:.67rem}
+  .tile{background:var(--surface);padding:.86rem 1rem;border:1px solid var(--border);border-radius:.5rem}
+  .tile-label{font-size:.57rem;font-weight:600;text-transform:uppercase;letter-spacing:1.2px;color:var(--text-dim);margin-bottom:.67rem;display:flex;align-items:center;gap:.38rem}
+  .tile-label::before{content:'';width:.29rem;height:.29rem;background:var(--accent);border-radius:50%}
+
+  .row1{display:flex;gap:.67rem;align-items:stretch}
+  .beam-col{flex:1;display:flex;flex-direction:column;gap:.57rem;min-width:0}
+  .beam-tile canvas{width:100%;height:16.2rem;display:block;border-radius:.38rem;background:var(--bg);border:1px solid var(--border)}
+  .slider-tile{background:var(--surface);padding:.67rem 1rem;border:1px solid var(--border);border-radius:.5rem}
+
+  .control-label{font-size:.62rem;font-weight:600;color:var(--text-dim);letter-spacing:.8px;margin-bottom:.48rem}
   #sliderLabel{text-transform:none;letter-spacing:normal;}
-  .slider-row{display:flex;align-items:center;gap:12px}
-  .slider-row input[type="range"]{flex:1;-webkit-appearance:none;appearance:none;height:7px;border-radius:4px;background:var(--surface2);outline:none;border:1px solid var(--border)}
-  .slider-row input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;border-radius:50%;background:var(--accent);cursor:pointer;border:2px solid var(--bg);box-shadow:0 0 10px var(--accent-glow)}
-  .slider-row input[type="range"]::-moz-range-thumb{width:20px;height:20px;border-radius:50%;background:var(--accent);cursor:pointer;border:2px solid var(--bg);box-shadow:0 0 10px var(--accent-glow)}
-  .slider-row input[type="number"]{width:70px;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'Inter',sans-serif;font-size:14px;font-weight:500;padding:7px 8px;text-align:right;outline:none}
-  .slider-row input[type="number"]:focus{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-glow)}
-  .unit{font-size:13px;color:var(--text-dim);font-family:'Inter',sans-serif;min-width:40px;font-weight:500}
+  .slider-row{display:flex;align-items:center;gap:.57rem}
+  .slider-row input[type="range"]{flex:1;-webkit-appearance:none;appearance:none;height:.33rem;border-radius:.2rem;background:var(--surface2);outline:none;border:1px solid var(--border)}
+  .slider-row input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:.95rem;height:.95rem;border-radius:50%;background:var(--accent);cursor:pointer;border:2px solid var(--bg);box-shadow:0 0 .48rem var(--accent-glow)}
+  .slider-row input[type="range"]::-moz-range-thumb{width:.95rem;height:.95rem;border-radius:50%;background:var(--accent);cursor:pointer;border:2px solid var(--bg)}
+  .slider-row input[type="number"]{width:3.3rem;background:var(--bg);border:1px solid var(--border);border-radius:.38rem;color:var(--text);font-family:'Inter',sans-serif;font-size:.67rem;font-weight:500;padding:.33rem .38rem;text-align:right;outline:none}
+  .slider-row input[type="number"]:focus{border-color:var(--accent);box-shadow:0 0 0 .1rem var(--accent-glow)}
+  .unit{font-size:.62rem;color:var(--text-dim);min-width:1.9rem;font-weight:500}
 
-  select{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'Inter',sans-serif;font-size:14px;font-weight:500;padding:9px 12px;outline:none;cursor:pointer}
+  select{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:.38rem;color:var(--text);font-family:'Inter',sans-serif;font-size:.67rem;font-weight:500;padding:.43rem .57rem;outline:none;cursor:pointer}
   select:focus{border-color:var(--accent)}
 
-  .material-props{margin-top:10px;display:flex;flex-direction:column;gap:5px}
-  .mat-prop{background:var(--bg);border-radius:7px;padding:10px 12px;border:1px solid var(--border);display:flex;justify-content:space-between;align-items:center}
-  .mat-prop .mp-label{font-size:12px;color:var(--text-dim);font-family:'Inter',sans-serif;font-weight:500}
-  .mat-prop .mp-value{font-size:13px;font-weight:600;font-family:'Inter',sans-serif;color:var(--text)}
-  .mat-prop .katex{font-size:13px}
+  .mat-prop .mp-label{font-size:.57rem;color:var(--text-dim);font-weight:500}
+  .mat-prop .mp-value{font-size:.62rem;font-weight:600;color:var(--text)}
+  .mat-prop .katex{font-size:.62rem}
 
-  .dims-row{display:flex;align-items:center;gap:10px;margin-top:4px}
-  .dims-row .katex{font-size:14px}
-  .dims-row input[type="number"]{width:64px;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'Inter',sans-serif;font-size:14px;font-weight:500;padding:7px 8px;text-align:right;outline:none}
+  .dims-row{display:flex;align-items:center;gap:.48rem;margin-top:.19rem}
+  .dims-row .katex{font-size:.67rem}
+  .dims-row input[type="number"]{width:3rem;background:var(--bg);border:1px solid var(--border);border-radius:.38rem;color:var(--text);font-family:'Inter',sans-serif;font-size:.67rem;font-weight:500;padding:.33rem .38rem;text-align:right;outline:none}
   .dims-row input[type="number"]:focus{border-color:var(--accent)}
 
   .graph-tile{position:relative}
-  .graph-tile canvas{width:100%;height:340px;display:block;border-radius:8px;background:var(--bg);border:1px solid var(--border)}
-  .status-badge{position:relative;background:transparent;border:none;padding:0;font-family:'Inter',sans-serif;font-size:13px;font-weight:700;letter-spacing:.5px;transition:color .2s;margin-top:12px;display:inline-block}
+  .graph-tile canvas{width:100%;height:16.2rem;display:block;border-radius:.38rem;background:var(--bg);border:1px solid var(--border)}
+  .status-badge{font-size:.62rem;font-weight:700;letter-spacing:.5px;transition:color .2s;margin-top:.57rem;display:inline-block}
 
-  .readout-row{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;flex-shrink:0;}  .readout-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:6px 8px;text-align:center;position:relative;cursor:default;overflow:visible;}
-  /* No text-transform here — it corrupts KaTeX glyphs */
-  .rc-label{font-size:13px;color:var(--text-dim);font-family:'Inter',sans-serif;margin-bottom:2px;font-weight:600;display:flex;align-items:center;justify-content:center;min-height:20px}
-  .rc-label .katex{font-size:14px}
-  .rc-value{font-size:13px;font-weight:700;font-family:'Inter',sans-serif;color:var(--text)}
-  .rc-unit{font-size:10px;color:var(--text-dim);font-weight:500}
+  .readout-row{display:grid;grid-template-columns:repeat(4,1fr);gap:.29rem;flex-shrink:0;}
+  .readout-card{background:var(--surface);border:1px solid var(--border);border-radius:.38rem;padding:.29rem .38rem;text-align:center;position:relative;cursor:pointer;overflow:visible;}
+  .rc-label{font-size:.62rem;color:var(--text-dim);margin-bottom:.1rem;font-weight:600;display:flex;align-items:center;justify-content:center;min-height:.95rem}
+  .rc-label .katex{font-size:.67rem}
+  .rc-value{font-size:.62rem;font-weight:700;color:var(--text)}
+  .rc-unit{font-size:.48rem;color:var(--text-dim);font-weight:500}
 
-  @media(max-width:640px){
-    .row1{flex-direction:column}
-    .controls-col{width:100%}
-    .beam-col{min-width:0}
-    .readout-row{flex-wrap:wrap}
-    .readout-card{min-width:calc(50% - 5px)}
-  }
-
-  @media(max-width:600px){
-    .readout-card{min-width:100%}
-    .main{padding:10px}
-    .tile{padding:14px 16px}
-  }
-
-  /* ── Light theme — soft gray palette ── */
+  /* ── Light theme ── */
   body.light{--bg:#e8ebf0;--surface:#f0f2f6;--surface2:#dde0e8;--border:#b8bdd0;--text:#1e2130;--text-dim:#4a5068;--accent:#2a7db5;--accent-glow:rgba(42,125,181,.15);--tension:#b02020;--compression:#1a60a0;--green:#207040;--yellow:#a06800;--orange:#904010;--red:#800000}
   body.light .rc-value{color:var(--text)}
   body.light select{color:var(--text);background:var(--bg)}
@@ -83,66 +87,87 @@
   body.light canvas{border-color:var(--border)}
 
   /* ── Cross-section shape selector ── */
-  .shape-row{display:flex;gap:6px;margin-bottom:10px;}
-  .shape-btn{flex:1;background:var(--bg);border:1px solid var(--border);border-radius:7px;padding:6px 4px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px;transition:border-color .15s,background .15s;}
-  .shape-btn:hover{border-color:var(--accent);background:var(--surface2);}
+  .shape-row{display:flex;gap:.29rem;margin-bottom:.48rem;}
+  .shape-btn{flex:1;background:var(--bg);border:1px solid var(--border);border-radius:.33rem;padding:.29rem .19rem;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:.14rem;transition:border-color .15s,background .15s;}
+  .shape-btn:hover,.shape-btn:focus{border-color:var(--accent);background:var(--surface2);}
   .shape-btn.active{border-color:var(--accent);background:var(--accent-glow);}
-  .shape-btn svg{width:24px;height:24px;}
-  .shape-btn span{font-size:9px;color:var(--text-dim);font-weight:600;letter-spacing:.4px;text-transform:uppercase;}
+  .shape-btn svg{width:1.14rem;height:1.14rem;}
+  .shape-btn span{font-size:.43rem;color:var(--text-dim);font-weight:600;letter-spacing:.4px;text-transform:uppercase;}
+
   /* ── 2×2 material props grid ── */
-  .mat-props-grid{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-top:8px;}
-  .mat-prop-sm{background:var(--bg);border-radius:6px;padding:6px 8px;border:1px solid var(--border);display:flex;flex-direction:column;gap:1px;position:relative;cursor:default;}
-  .mat-prop-sm .mp-label{font-size:11px;color:var(--text-dim);font-weight:500;}
-  .mat-prop-sm .mp-label .katex{font-size:11px;}
-  .mat-prop-sm .mp-value{font-size:12px;font-weight:600;color:var(--text);}
+  .mat-props-grid{display:grid;grid-template-columns:1fr 1fr;gap:.24rem;margin-top:.38rem;}
+  .mat-prop-sm{background:var(--bg);border-radius:.29rem;padding:.29rem .38rem;border:1px solid var(--border);display:flex;flex-direction:column;gap:.05rem;position:relative;cursor:pointer;}
+  .mat-prop-sm .mp-label{font-size:.52rem;color:var(--text-dim);font-weight:500;}
+  .mat-prop-sm .mp-label .katex{font-size:.52rem;}
+  .mat-prop-sm .mp-value{font-size:.57rem;font-weight:600;color:var(--text);}
+
   /* ── Cross-section diagram ── */
-  .xsec-wrap{margin-top:10px;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:10px;display:flex;justify-content:center;align-items:center;}
+  .xsec-wrap{margin-top:.48rem;background:var(--bg);border:1px solid var(--border);border-radius:.38rem;padding:.48rem;display:flex;justify-content:center;align-items:center;cursor:help;}
   .xsec-wrap svg{max-width:100%;height:auto;overflow:visible;}
 
-
-  /* ── controls-col min width so beam+controls always side by side ── */
-  .controls-col{width:290px;min-width:250px;flex-shrink:0}
+  /* ── controls-col ── */
+  .controls-col{width:13.8rem;min-width:12rem;flex-shrink:0}
   .row1{flex-wrap:nowrap}
 
-  .beam-tile-label{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;text-transform:uppercase;font-size:12px;font-weight:600;letter-spacing:1.2px;color:var(--text-dim);}
-  .beam-tile-label-left{display:flex;align-items:center;gap:8px;}
-  .beam-tile-label-left::before{content:'';width:6px;height:6px;background:var(--accent);border-radius:50%;flex-shrink:0;}
+  /* ── Beam tile label ── */
+  .beam-tile-label{display:flex;justify-content:space-between;align-items:center;margin-bottom:.67rem;text-transform:uppercase;font-size:.57rem;font-weight:600;letter-spacing:1.2px;color:var(--text-dim);}
+  .beam-tile-label-left{display:flex;align-items:center;gap:.38rem;}
+  .beam-tile-label-left::before{content:'';width:.29rem;height:.29rem;background:var(--accent);border-radius:50%;flex-shrink:0;}
 
   /* ── Readout card ── */
-  .readout-card{position:relative;cursor:default;overflow:visible;}
+  .readout-card{position:relative;overflow:visible;}
 
-  /* ── Tooltips — CSS hover only ── */
+  /* ── Tooltips ── hover on desktop, tap toggle on touch ── */
   .tip-wrap{
     visibility:hidden;opacity:0;
     position:fixed;z-index:9999;pointer-events:none;
     transition:opacity .15s;
   }
-  .has-tip:hover .tip-wrap{visibility:visible;opacity:1;}
-  .rc-tooltip{
-    background:var(--surface2);border:1px solid var(--border);border-radius:8px;
-    padding:10px 13px;width:230px;
-    box-shadow:0 6px 24px rgba(0,0,0,.5);
+  /* desktop hover */
+  @media(hover:hover){
+    .has-tip:hover .tip-wrap{visibility:visible;opacity:1;}
   }
-  .rc-tooltip .tt-title{font-size:11px;font-weight:700;color:var(--accent);margin-bottom:4px;font-family:Inter,sans-serif;letter-spacing:.4px;}
-  .rc-tooltip .tt-def{font-size:11px;color:var(--text-dim);line-height:1.5;font-family:Inter,sans-serif;margin-bottom:6px;}
-  .rc-tooltip .tt-eq{font-size:12px;text-align:center;margin-top:4px;}
-  .mat-prop{position:relative;cursor:default;}
+  /* touch: toggled via JS .tip-open class */
+  .has-tip.tip-open .tip-wrap{visibility:visible;opacity:1;pointer-events:auto;}
 
-  /* ── Theme toggle switch ── */
+  .rc-tooltip{
+    background:var(--surface2);border:1px solid var(--border);border-radius:.38rem;
+    padding:.48rem .62rem;width:11rem;
+    box-shadow:0 .29rem 1.14rem rgba(0,0,0,.5);
+  }
+  .rc-tooltip .tt-title{font-size:.52rem;font-weight:700;color:var(--accent);margin-bottom:.19rem;letter-spacing:.4px;}
+  .rc-tooltip .tt-def{font-size:.52rem;color:var(--text-dim);line-height:1.5;margin-bottom:.29rem;}
+  .rc-tooltip .tt-eq{font-size:.57rem;text-align:center;margin-top:.19rem;}
+  .mat-prop{position:relative;cursor:pointer;}
+
+  /* ── Theme toggle ── */
   .theme-switch{display:inline-flex;align-items:center;cursor:pointer;user-select:none;}
   .theme-switch input{display:none;}
-  .theme-track{width:50px;height:26px;background:var(--surface2);border:1px solid var(--border);border-radius:13px;position:relative;transition:background .25s;}
+  .theme-track{width:2.38rem;height:1.24rem;background:var(--surface2);border:1px solid var(--border);border-radius:.62rem;position:relative;transition:background .25s;}
   .theme-switch input:checked + .theme-track{background:#f0c040;}
-  .theme-thumb{position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#1e2230;transition:left .25s,background .25s;box-shadow:0 1px 4px rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center;font-size:12px;line-height:1;}
-  .theme-switch input:checked + .theme-track .theme-thumb{left:27px;background:#fff9e6;}
+  .theme-thumb{position:absolute;top:.14rem;left:.14rem;width:.95rem;height:.95rem;border-radius:50%;background:#1e2230;transition:left .25s,background .25s;box-shadow:0 1px 4px rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center;font-size:.57rem;line-height:1;}
+  .theme-switch input:checked + .theme-track .theme-thumb{left:1.29rem;background:#fff9e6;}
   .theme-icon{position:absolute;line-height:1;}
   .theme-icon-moon{opacity:1;transition:opacity .2s;}
   .theme-icon-sun{opacity:0;transition:opacity .2s;}
   .theme-switch input:checked + .theme-track .theme-thumb .theme-icon-moon{opacity:0;}
   .theme-switch input:checked + .theme-track .theme-thumb .theme-icon-sun{opacity:1;}
+
+  /* ── Mobile: stack layout ── */
+  @media(max-width:700px){
+    :root{font-size:18px;}
+    .row1{flex-direction:column}
+    .controls-col{width:100%;min-width:0}
+    .readout-row{grid-template-columns:repeat(2,1fr)}
+  }
+  @media(max-width:420px){
+    :root{font-size:16px;}
+    .readout-row{grid-template-columns:repeat(2,1fr)}
+  }
 </style>
 </head>
 <body>
+<div class="page-wrap">
 <div class="header"><div><h1>PURE BENDING SIMULATION</h1><div class="sub">Elastic Flexure Formula — Interactive Demo</div></div>
   <div style="margin-left:auto;display:flex;align-items:center;">
     <label class="theme-switch" title="Toggle light/dark theme">
@@ -275,6 +300,8 @@
     <div class="status-badge" id="statusBadge">ELASTIC</div>
   </div>
 </div>
+
+</div><!-- end .page-wrap -->
 
 <script>
 // ── Render all LaTeX labels ──
@@ -1269,6 +1296,34 @@ window.addEventListener('resize',refresh);
 document.addEventListener('DOMContentLoaded',()=>{
   const cb=document.getElementById('themeToggle');
   if(cb){ cb.addEventListener('change',()=>{ document.body.classList.toggle('light',cb.checked); refresh(); }); }
+
+  // ── Fix 3: touch tooltip toggle — tap opens, tap outside or same closes ──
+  let openTip = null;
+  document.addEventListener('touchstart', e => {
+    const card = e.target.closest('.has-tip');
+    if (card) {
+      e.preventDefault(); // stop the touch from also firing hover
+      if (openTip && openTip !== card) {
+        openTip.classList.remove('tip-open');
+      }
+      if (card.classList.contains('tip-open')) {
+        card.classList.remove('tip-open');
+        openTip = null;
+      } else {
+        card.classList.add('tip-open');
+        openTip = card;
+        // position the tip
+        const wrap = card.querySelector('.tip-wrap');
+        if (wrap) positionTip(card, wrap);
+      }
+    } else {
+      // tap outside — close any open tip
+      if (openTip) {
+        openTip.classList.remove('tip-open');
+        openTip = null;
+      }
+    }
+  }, { passive: false });
 });
 
 // INIT
