@@ -21,7 +21,7 @@
     Layout stays in px so tiles don't grow with text.
   */
   :root{
-    font-size: clamp(20px, 5.5vw, 30px);
+    font-size: clamp(27px, 7.5vw, 40px); /* phone default — scales with width */
     --bg:#0f1117;--surface:#181b24;--surface2:#1e2230;--border:#2a2e3d;
     --text:#e2e4ea;--text-dim:#8b90a0;--accent:#4fa3e0;
     --accent-glow:rgba(79,163,224,.15);
@@ -178,7 +178,11 @@
   .theme-switch input:checked + .theme-track .theme-thumb .theme-icon-moon{opacity:0;}
   .theme-switch input:checked + .theme-track .theme-thumb .theme-icon-sun{opacity:1;}
 
-  /* ── Mobile — layout only; font scales via clamp() above ── */
+  /* ── Desktop: tighter font, same layout ── */
+  @media(min-width:801px){
+    :root{ font-size: clamp(20px, 5.5vw, 30px); }
+  }
+  /* ── Mobile layout (no font-size override — uses root clamp above) ── */
   @media(max-width:800px){
     .row1{flex-direction:column}
     .controls-col{width:100%;min-width:0}
