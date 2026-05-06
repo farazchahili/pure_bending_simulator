@@ -243,11 +243,11 @@
           <!-- Snap dots overlaid on track — JS positions them relative to the range element -->
           <div class="slider-track-overlay" id="sliderOverlay">
             <div class="snap-tick yield" id="tickYield" style="display:none"></div>
-            <div class="snap-tooltip" id="tipYield"><div class="st-title" id="tipYieldTitle"></div><div class="st-def" id="tipYieldDef"></div></div>
+            <div class="snap-tooltip" id="tipYield"><div class="st-title"><span id="tipYieldTitle"></span></div><div class="st-def" id="tipYieldDef"></div></div>
             <div class="snap-tick ultimate" id="tickUlt" style="display:none"></div>
-            <div class="snap-tooltip" id="tipUlt"><div class="st-title" id="tipUltTitle"></div><div class="st-def" id="tipUltDef"></div></div>
+            <div class="snap-tooltip" id="tipUlt"><div class="st-title"><span id="tipUltTitle"></span></div><div class="st-def" id="tipUltDef"></div></div>
             <div class="snap-tick fracture" id="tickFrac" style="display:none"></div>
-            <div class="snap-tooltip" id="tipFrac"><div class="st-title" id="tipFracTitle"></div><div class="st-def" id="tipFracDef"></div></div>
+            <div class="snap-tooltip" id="tipFrac"><div class="st-title"><span id="tipFracTitle"></span></div><div class="st-def" id="tipFracDef"></div></div>
           </div>
         </div>
       </div>
@@ -470,7 +470,7 @@ function initLabels() {
     { id:'lblSY', titleText:'Yield Stress', titleLatex:'\\sigma_y', def:'Stress at which the material starts deforming plastically.',
       eqs:['\\varepsilon_y = \\dfrac{\\sigma_y}{E}'] },
     { id:'lblSU', titleText:'Ultimate Stress', titleLatex:'\\sigma_u', def:'Maximum stress before necking begins.',
-      eqs:['\\text{Safety factor} = \\dfrac{\\sigma_u}{\\sigma}'] },
+      eqs:['\\text{Safety factor} = \\dfrac{\\sigma_u}{\\sigma_{\\text{allow}}}'] },
     { id:'lblEF', titleText:'Fracture Strain', titleLatex:'\\varepsilon_f', def:'Total strain at fracture — a measure of ductility.',
       eqs:['\\varepsilon_f = \\dfrac{\\Delta L_f}{L_0}'] },
   ];
@@ -1338,23 +1338,27 @@ function updateSnapDots(){
     { tickId:'tickYield', tipTitleId:'tipYieldTitle', tipDefId:'tipYieldDef', tipId:'tipYield',
       pos: isStress ? m.sigmaY/m.sigmaU : ey/m.epsFrac,
       show: true,
-      title: isStress ? `Yield Stress \u2014 \u03c3_y = ${(m.sigmaY/1e6).toFixed(0)} MPa`
-                      : `Yield Strain \u2014 \u03b5_y = ${ey.toFixed(5)}`,
-      def:  isStress ? 'Stress at which the material first deforms plastically. Beyond this point deformation is permanent.'
-                     : 'Strain corresponding to first yield. The elastic–plastic boundary.'
+      titleLatex: isStress
+        ? `\\sigma_y = ${(m.sigmaY/1e6).toFixed(0)}\\text{ MPa}`
+        : `\\varepsilon_y = ${ey.toFixed(5)}`,
+      def: isStress
+        ? 'Stress at which the material first deforms plastically. Beyond this point deformation is permanent.'
+        : 'Strain corresponding to first yield. The elastic–plastic boundary.'
     },
     { tickId:'tickUlt', tipTitleId:'tipUltTitle', tipDefId:'tipUltDef', tipId:'tipUlt',
       pos: isStress ? 1.0 : eu/m.epsFrac,
       show: true,
-      title: isStress ? `Ultimate Stress \u2014 \u03c3_u = ${(m.sigmaU/1e6).toFixed(0)} MPa`
-                      : `Ultimate Strain \u2014 \u03b5_u = ${eu.toFixed(5)}`,
-      def:  isStress ? 'Maximum stress the material can sustain before necking begins.'
-                     : 'Strain at maximum stress. Necking begins beyond this point.'
+      titleLatex: isStress
+        ? `\\sigma_u = ${(m.sigmaU/1e6).toFixed(0)}\\text{ MPa}`
+        : `\\varepsilon_u = ${eu.toFixed(5)}`,
+      def: isStress
+        ? 'Maximum stress the material can sustain before necking begins.'
+        : 'Strain at maximum stress. Necking begins beyond this point.'
     },
     { tickId:'tickFrac', tipTitleId:'tipFracTitle', tipDefId:'tipFracDef', tipId:'tipFrac',
       pos: 1.0,
       show: !isStress,
-      title: `Fracture Strain \u2014 \u03b5_f = ${m.epsFrac.toFixed(5)}`,
+      titleLatex: `\\varepsilon_f = ${m.epsFrac.toFixed(5)}`,
       def: 'Total strain at complete fracture — a measure of ductility.'
     }
   ];
@@ -1387,7 +1391,7 @@ function updateSnapDots(){
     const px=trackLeft+t.pos*trackWidth;
     tick.style.left=px+'px';
     tick.style.top=dotY+'px';
-    if(tipTitle) tipTitle.textContent=t.title;
+    if(tipTitle) katex.render(t.titleLatex, tipTitle, {throwOnError:false, displayMode:false});
     if(tipDef) tipDef.textContent=t.def;
 
     // Wire tooltip: show above the tick, always above readout tiles (fixed, z=99999)
